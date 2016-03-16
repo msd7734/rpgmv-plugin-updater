@@ -33,6 +33,24 @@ def yanfly_get():
     for u in plugin_urls:
         print u
 
+def pname_from_url(url):
+    '''
+    Get a plugin name extracted from a url.
+
+    Args:
+        url (str): A string containing a plugin name in the format
+                    PluginName.js
+
+    Returns:
+        plugin name (str) or None if none found
+    '''
+
+    m = re.search('.*/(.+)\.js', url)
+    if m:
+        return m.group(1)
+    else:
+        return None
+
 def match_wildcards(pdict, matchstr):
     '''
     From a dict of keys : wildcard patterns, return the key of
@@ -58,27 +76,59 @@ def get_plugin_mapping(cfgParser):
     pm = PluginManifest(cfgParser.manifest)
     if pm.success == False:
         print "Could not find a valid plugins file at {0}.".format(pm.fname)
-        return None
+        return {}
+
+    hrefParsers = {}
 
     result = {}
     
     plugins = pm.plugins
+    
     for p in plugins:
         # if key is in cfg.plugins, get val
         # else if matches any cfg.batch, get val from that
-        if p in cfgParser.plugin:
+        inCfg = p in cfgParser.plugin
+        if inCfg == True:
             key = p
-            pass
         else:
             # check match from wildcard strings
             key = match_wildcards(cfgParser.batch, p)
+            if key:
+                inCfg = True
+            else:
+                inCfg = False
 
-        if key and key in cfgParser.plugin:
+        # if plugin from manifest found in cfg
+        if inCfg:
+            # update_url is direct match to plugin name
             update_url = cfgParser.plugin[key]
+            # but if update_url is a root...
             if update_url in cfgParser.root:
                 update_url = cfgParser.root[update_url]
+                # ...parse it
+                # but don't fetch same root multiple times
+                if update_url in hrefParsers:
+                    hrefParser = hrefParsers[update_url]
+                else:
+                    hrefParser = PF.fetch_root(update_url)
+                    hrefParsers[update_url] = hrefParser
+                    
+                root_purls = PF.parse_root(hrefParser)
+                
+                # if we get back some valid resource urls...
+                if root_purls:
+                    # ...find first match to plugin name
+                    try:
+                        update_url = next(url for url in root_purls \
+                                          if pname_from_url(url)==p)
+                    except StopIteration as si:
+                        update_url = None
 
-            result[p] = update_url
+            else:
+                print "Fetching from: {0}".format(update_url)
+                
+            if update_url:
+                result[p] = update_url
 
     return result
                     
@@ -89,7 +139,9 @@ cfgparser = PluginConfigParser()
 valid = cfgparser.read('config.ini')
 if valid:
     plugin_map = get_plugin_mapping(cfgparser)
-    print plugin_map
+    print "Found update resources for the following plugins:"
+    for p in plugin_map.keys():
+        print "\t" + p
 
 '''
 pm = PluginManifest('js/plugins.js')

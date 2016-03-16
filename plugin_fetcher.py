@@ -41,7 +41,7 @@ def parse_root(hrefParser):
         List of all valid plugin resource URLs from parsed page links.
     '''
     if hrefParser.hrefs:
-        return filter(lambda x: x[-3:]=='.js', htmlParser.hrefs)
+        return filter(lambda x: x[-3:]=='.js', hrefParser.hrefs)
     else:
         return []
 
