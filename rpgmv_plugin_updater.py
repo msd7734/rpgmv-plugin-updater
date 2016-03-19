@@ -1,6 +1,7 @@
 import requests
 import urllib
 import re
+import md5
 
 import plugin_fetcher as PF
 from PluginManifest import PluginManifest
@@ -119,16 +120,49 @@ def get_plugin_mapping(cfgParser):
 
     return result
                     
+
+def get_local_hashes(plugins):
+    '''
+    Get the md5 hashes of all given plugins.
+
+    Args:
+        plugins(List[str]): Plugin names w/o file extension.
+    Returns:
+        Dictionary { PluginName(str) : MD5 digest(str) }
+    '''
     
+    plugin_path = "js/plugins/"
+    
+    result = {}
+    for pname in plugins:
+        fpath = plugin_path + pname + ".js"
+        try:
+            with open(fpath, 'r') as f:
+                m = md5.new()
+                m.update(f.read())
+                result[pname] = m.digest()
+        except IOError ioe:
+            # TODO: Make this MD5 = 0 so it always gets updated?
+            # Well, technically written as a new file, not updated.
+            print "Missing local plugin: {0}".format(\
+                os.path.abspath())
+
+    return result
+    
+
+
 
 cfgparser = PluginConfigParser()
 # initialize config parser
 valid = cfgparser.read('config.ini')
 if valid:
     plugin_map = get_plugin_mapping(cfgparser)
-    print "Found update resources for the following plugins:"
-    for p in plugin_map.keys():
-        print "\t" + p
+    if plugin_map:
+        print "Found update resources for the following plugins:"
+        for p in plugin_map.keys():
+            print "\t" + p
+    else:
+        print "No updatable plugins."
 
 '''
 pm = PluginManifest('js/plugins.js')
