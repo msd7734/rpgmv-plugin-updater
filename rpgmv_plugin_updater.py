@@ -1,7 +1,9 @@
 import requests
 import urllib
 import re
+import os
 import md5
+import sets
 
 import plugin_fetcher as PF
 from PluginManifest import PluginManifest
@@ -138,14 +140,16 @@ def get_local_hashes(plugins):
         fpath = plugin_path + pname + ".js"
         try:
             with open(fpath, 'r') as f:
+                data = f.read()
+                data = unicode(data, 'utf-8').encode('utf-8')
                 m = md5.new()
-                m.update(f.read())
+                m.update(data)
                 result[pname] = m.digest()
-        except IOError ioe:
+        except IOError as ioe:
             # TODO: Make this MD5 = 0 so it always gets updated?
             # Well, technically written as a new file, not updated.
             print "Missing local plugin: {0}".format(\
-                os.path.abspath())
+                os.path.abspath(fpath))
 
     return result
 
@@ -162,6 +166,8 @@ def get_remote_hashes(plugin_map):
     result = {}
     for pname in plugin_map.keys():
         data = PF.fetch_url(plugin_map[pname])
+        # Everything is unicode!
+        data = data.encode('utf-8')
         if data:
             m = md5.new(data)
             result[pname] = m.digest()
@@ -172,6 +178,21 @@ def get_remote_hashes(plugin_map):
             
     return result
 
+def set_difference(L1, L2):
+    '''
+    Return the set difference of two lists as a list.
+    '''
+    S1 = sets.Set(L1)
+    S2 = sets.Set(L2)
+    return list(S1.difference(S2))
+
+def set_intersection(L1, L2):
+    '''
+    Return the set intersection of two lists as a list.
+    '''
+    S1 = sets.Set(L1)
+    S2 = sets.Set(L2)
+    return list(S1.intersection(S2))
 
 cfgparser = PluginConfigParser()
 # initialize config parser
@@ -182,6 +203,32 @@ if valid:
         print "Found update resources for the following plugins:"
         for p in plugin_map.keys():
             print "\t" + p
+
+        # get hashes for comparison
+        print "Checking local plugins..."
+        loc_hashes = get_local_hashes(plugin_map.keys())
+        print "Found these local plugins:"
+        for locplugin in loc_hashes.keys():
+            print "\t"+ locplugin
+
+        print "\nChecking remote plugins..."
+        rem_hashes = get_remote_hashes(plugin_map)
+        print "Found these remote plugins:"
+        for remplugin in rem_hashes.keys():
+            print "\t" + remplugin
+        
+        updatable = set_intersection(loc_hashes, rem_hashes)
+        print "\nThe ones with both local and remote versions, "+\
+              "thus being updatable, are:"
+        for validplugin in updatable:
+            print "\t" + validplugin
+
+        for p in updatable:
+            if loc_hashes[p] == rem_hashes[p]:
+                print p + " is up to date."
+            else:
+                print p + " has a new version."
+        
     else:
         print "No updatable plugins."
 
