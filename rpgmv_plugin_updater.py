@@ -21,18 +21,6 @@ def dropbox_get(obj_id, obj_name):
         for chunk in r.iter_content():
             fd.write(chunk)
 
-# dropbox_get("uzfxvvp17ypb1tb", "YEP_CoreEngine.js")
-
-def yanfly_get():
-    url = "http://yanfly.moe/plugins/en"
-    root = PF.fetch_root(url)
-    if root:
-        plugin_urls = PF.parse_root(root)
-    else:
-        plugin_urls = []
-    for u in plugin_urls:
-        print u
-
 def pname_from_url(url):
     '''
     Get a plugin name extracted from a url.
