@@ -123,7 +123,7 @@ def get_plugin_mapping(cfgParser):
 
 def get_local_hashes(plugins):
     '''
-    Get the md5 hashes of all given plugins.
+    Get the local md5 hashes of all given plugins.
 
     Args:
         plugins(List[str]): Plugin names w/o file extension.
@@ -148,8 +148,29 @@ def get_local_hashes(plugins):
                 os.path.abspath())
 
     return result
-    
 
+    
+def get_remote_hashes(plugin_map):
+    '''
+    Get the remote md5 hashes of all given plugins at mapped URLS.
+
+    Args:
+        plugin_map(Dict{ PluginName(str) : URL(str) })
+    Returns:
+        Dictionary { PluginName(str) : MD5 digest(str) }
+    '''
+    result = {}
+    for pname in plugin_map.keys():
+        data = PF.fetch_url(plugin_map[pname])
+        if data:
+            m = md5.new(data)
+            result[pname] = m.digest()
+            pass
+        else:
+            print "Could not get {0} update: {1}".format(\
+                pname, plugin_map[pname])
+            
+    return result
 
 
 cfgparser = PluginConfigParser()
