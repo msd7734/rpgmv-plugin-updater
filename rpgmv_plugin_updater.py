@@ -28,7 +28,6 @@ def pname_from_url(url):
     Args:
         url (str): A string containing a plugin name in the format
                     PluginName.js
-
     Returns:
         plugin name (str) or None if none found
     '''
@@ -56,7 +55,6 @@ def get_plugin_mapping(cfgParser):
 
     Args:
         cfgParser (PluginConfigParser): An initialized config parser.
-    
     Returns:
         dict{plugin_name(str) : update_url(str)}
     '''
@@ -113,7 +111,8 @@ def get_plugin_mapping(cfgParser):
                         update_url = None
 
             else:
-                print "Fetching from: {0}".format(update_url)
+                pass
+                # print "Fetching from: {0}".format(update_url)
                 
             if update_url:
                 result[p] = update_url
