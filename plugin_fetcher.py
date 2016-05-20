@@ -54,6 +54,6 @@ def fetch_url(url, *args, **kwargs):
             raise bse
         return r.text
     except requests.exceptions.RequestException as re:
-        print "Request error {0}: {1}".format(re.errno, re.strerror)
+        # print "Request error {0}: {1}".format(re.errno, re.strerror)
         return ''
     

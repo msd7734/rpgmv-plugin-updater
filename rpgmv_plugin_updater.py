@@ -8,6 +8,7 @@ import sets
 import plugin_fetcher as PF
 from PluginManifest import PluginManifest
 from PluginConfigParser import PluginConfigParser
+from HashData import HashData
 
 dropbox_url = "https://www.dropbox.com/s/{0}/{1}"
 
@@ -123,21 +124,20 @@ def get_plugin_mapping(cfgParser):
     return result
                     
 
-def get_local_hashes(plugins):
+def get_local_hashes(plugins, path):
     '''
     Get the local md5 hashes of all given plugins.
 
     Args:
         plugins(List[str]): Plugin names w/o file extension.
+        path: Path to plugin folder.
     Returns:
         Dictionary { PluginName(str) : MD5 digest(str) }
     '''
     
-    plugin_path = "js/plugins/"
-    
     result = {}
     for pname in plugins:
-        fpath = plugin_path + pname + ".js"
+        fpath = os.path.join(path, pname+".js")
         try:
             with open(fpath, 'r') as f:
                 data = f.read()
@@ -154,14 +154,14 @@ def get_local_hashes(plugins):
     return result
 
     
-def get_remote_hashes(plugin_map):
+def get_remote_data(plugin_map):
     '''
-    Get the remote md5 hashes of all given plugins at mapped URLS.
+    Get the remote data and md5 hashes of all given plugins at mapped URLS.
 
     Args:
         plugin_map(Dict{ PluginName(str) : URL(str) })
     Returns:
-        Dictionary { PluginName(str) : MD5 digest(str) }
+        Dictionary { PluginName(str) : Data(HashData) }
     '''
     result = {}
     for pname in plugin_map.keys():
@@ -170,7 +170,7 @@ def get_remote_hashes(plugin_map):
         data = data.encode('utf-8')
         if data:
             m = md5.new(data)
-            result[pname] = m.digest()
+            result[pname] = HashData(data, m.digest())
             pass
         else:
             print "Could not get {0} update: {1}".format(\
@@ -196,38 +196,57 @@ def set_intersection(L1, L2):
 
 cfgparser = PluginConfigParser()
 # initialize config parser
+print "Reading config file..."
 valid = cfgparser.read('config.ini')
 if valid:
+    print "Reading plugin manifest ({0})...".format(cfgparser.manifest)
     plugin_map = get_plugin_mapping(cfgparser)
     if plugin_map:
-        print "Found update resources for the following plugins:"
+
+        '''
         for p in plugin_map.keys():
             print "\t" + p
-
+        '''
+        
         # get hashes for comparison
         print "Checking local plugins..."
-        loc_hashes = get_local_hashes(plugin_map.keys())
+        loc_hashes = get_local_hashes(plugin_map.keys(), \
+                                      cfgparser.pluginsfolder)
+
+        '''
         print "Found these local plugins:"
         for locplugin in loc_hashes.keys():
             print "\t"+ locplugin
+        '''
 
         print "\nChecking remote plugins..."
-        rem_hashes = get_remote_hashes(plugin_map)
+        rem_hashdata = get_remote_data(plugin_map)
+        print ""
+        
+        '''
         print "Found these remote plugins:"
         for remplugin in rem_hashes.keys():
             print "\t" + remplugin
+        '''
         
-        updatable = set_intersection(loc_hashes, rem_hashes)
+        updatable = set_intersection(loc_hashes, rem_hashdata)
+        hasNew = []
+
+        '''
         print "\nThe ones with both local and remote versions, "+\
               "thus being updatable, are:"
         for validplugin in updatable:
             print "\t" + validplugin
+        '''
 
         for p in updatable:
-            if loc_hashes[p] == rem_hashes[p]:
+            if loc_hashes[p] == rem_hashdata[p].md5Hash:
                 print p + " is up to date."
             else:
+                hasNew.append(p)
                 print p + " has a new version."
+            
+            
         
     else:
         print "No updatable plugins."
