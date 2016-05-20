@@ -227,42 +227,18 @@ if valid:
     print "Reading plugin manifest ({0})...".format(cfgparser.manifest)
     plugin_map = get_plugin_mapping(cfgparser)
     if plugin_map:
-
-        '''
-        for p in plugin_map.keys():
-            print "\t" + p
-        '''
         
         # get hashes for comparison
         print "Checking local plugins..."
         loc_hashes = get_local_hashes(plugin_map.keys(), \
                                       cfgparser.pluginsfolder)
 
-        '''
-        print "Found these local plugins:"
-        for locplugin in loc_hashes.keys():
-            print "\t"+ locplugin
-        '''
-
         print "Checking remote plugins..."
         rem_hashdata = get_remote_data(plugin_map)
         print ""
-        
-        '''
-        print "Found these remote plugins:"
-        for remplugin in rem_hashes.keys():
-            print "\t" + remplugin
-        '''
-        
+
         updatable = set_intersection(loc_hashes, rem_hashdata)
         hasNew = []
-
-        '''
-        print "\nThe ones with both local and remote versions, "+\
-              "thus being updatable, are:"
-        for validplugin in updatable:
-            print "\t" + validplugin
-        '''
 
         for p in updatable:
             if loc_hashes[p] == rem_hashdata[p].md5Hash:
@@ -305,12 +281,3 @@ if valid:
         
     else:
         print "No updatable plugins."
-
-'''
-pm = PluginManifest('js/plugins.js')
-if pm.success == False:
-    print "Could not find the plugins.js file. Aborting."
-else:
-    for p in pm.plugins:
-        print p
-'''
