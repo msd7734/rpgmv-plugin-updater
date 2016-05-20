@@ -1,10 +1,11 @@
+import os.path
 from ConfigParser import SafeConfigParser
 from ConfigParser import NoSectionError
 
 # to recreate behavior from ConfigParser
 from collections import OrderedDict as _default_dict
 
-req_sections = ['manifest', 'root', 'batch', 'plugin']
+req_sections = ['manifest', 'pluginsfolder', 'root', 'batch', 'plugin']
 
 fail_read_msg = "Failed to read config file (expected \'{0}\')."
 poor_frmt_msg = "Config file was poorly formatted (missing section \'{0}\')."
@@ -13,6 +14,7 @@ class PluginConfigParser(SafeConfigParser):
     def __init__(self, defaults=None, dict_type=_default_dict, \
                  allow_no_value=False):
         self.manifest = ''
+        self.pluginsfolder = ''
         self.root = {}
         self.batch = {}
         self.plugin = {}
@@ -53,11 +55,17 @@ class PluginConfigParser(SafeConfigParser):
         nie = NotImplementedError()
         nie.strerror = "readfp() is not supported in PluginConfigParser." \
         + "Use read() instead."
+        raise nie
 
     def _init_members(self):
         self.manifest = self.get('manifest', 'Location')
         if self.manifest.lower() == 'default':
-            self.manifest = 'js/plugins.js'
+            self.manifest = 'js'
+        self.manifest = os.path.join(self.manifest, 'plugins.js')
+
+        self.pluginsfolder = self.get('pluginsfolder', 'Location')
+        if self.pluginsfolder.lower() == 'default':
+            self.pluginsfolder = 'js/plugins'
 
         for r in self.items('root'):
             self.root[ r[0] ] = r[1]
