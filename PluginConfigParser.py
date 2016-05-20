@@ -5,7 +5,10 @@ from ConfigParser import NoSectionError
 # to recreate behavior from ConfigParser
 from collections import OrderedDict as _default_dict
 
-req_sections = ['manifest', 'pluginsfolder', 'root', 'batch', 'plugin']
+req_sections = ['manifest', 'pluginsfolder', 'root', 'batch', 'plugin',\
+                'update']
+
+update_types = ['auto', 'save', 'none']
 
 fail_read_msg = "Failed to read config file (expected \'{0}\')."
 poor_frmt_msg = "Config file was poorly formatted (missing section \'{0}\')."
@@ -18,6 +21,7 @@ class PluginConfigParser(SafeConfigParser):
         self.root = {}
         self.batch = {}
         self.plugin = {}
+        self.update = ''
         
         SafeConfigParser.__init__(self, defaults, dict_type, allow_no_value)
         
@@ -75,6 +79,10 @@ class PluginConfigParser(SafeConfigParser):
 
         for p in self.items('plugin'):
             self.plugin[ p[0] ] = p[1]
+
+        self.update = self.get('update', 'Type')
+        if not(self.update in update_types):
+            self.update = "auto"
     
     def printall(self):
         print self.manifest

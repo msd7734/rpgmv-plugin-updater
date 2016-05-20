@@ -178,6 +178,31 @@ def get_remote_data(plugin_map):
             
     return result
 
+def write_data(data_map, dest):
+    '''
+    Write downloaded plugin data to plugin files.
+
+    Args:
+        data_map(Dict{ PluginName(str) : Data(HashData) })
+        dest(String): Directory to write
+    Returns:
+        List of plugin names that could not be written.
+    '''
+    failed = []
+    try:
+        if os.path.exists(dest) == False:
+            os.makedirs(dest)
+    except:
+        return data_map.keys()
+    
+    for plugin in data_map:
+        with open(os.path.join(dest, plugin+".js"), 'w') as f:
+            try:
+                f.write(data_map[plugin].data)
+            except IOError as ioe:
+                failed.append(plugin)
+    return failed
+
 def set_difference(L1, L2):
     '''
     Return the set difference of two lists as a list.
@@ -219,7 +244,7 @@ if valid:
             print "\t"+ locplugin
         '''
 
-        print "\nChecking remote plugins..."
+        print "Checking remote plugins..."
         rem_hashdata = get_remote_data(plugin_map)
         print ""
         
@@ -245,8 +270,38 @@ if valid:
             else:
                 hasNew.append(p)
                 print p + " has a new version."
-            
-            
+
+        print ""
+
+        if len(hasNew) == 0:
+            print "No updates to be done."
+        else:
+            print "Update type: {0}\n".format(cfgparser.update)
+
+            newData = {plugin:data for plugin,data \
+                       in rem_hashdata.iteritems() \
+                       if plugin in hasNew}
+                
+            if cfgparser.update == 'none':
+                print "No updates to be done."
+            else:
+                writePath = ''
+                if cfgparser.update == 'auto':
+                    writePath = cfgparser.pluginsfolder
+                elif cfgparser.update == 'save':
+                    writePath = 'updates'
+                else:
+                    print "Unknown update type: {0}"\
+                          .format(cfgparser.update)
+                    print "Program will now exit."
+                    sys.exit(0)
+
+                failed = write_data(newData, writePath)
+                for success in set_difference(newData, failed):
+                    print "{0} was saved.".format(success)
+                for f in failed:
+                    print "The plugin {0} could not be written.".format(f)                 .format(f)
+                
         
     else:
         print "No updatable plugins."
