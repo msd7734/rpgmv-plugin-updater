@@ -86,3 +86,6 @@ ENV/
 
 # binaries
 bin/
+
+# build script and resources
+build/
