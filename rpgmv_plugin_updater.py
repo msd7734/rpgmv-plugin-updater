@@ -221,65 +221,67 @@ def set_intersection(L1, L2):
     S2 = sets.Set(L2)
     return list(S1.intersection(S2))
 
-cfgparser = PluginConfigParser()
-# initialize config parser
-print "Reading config file..."
-valid = cfgparser.read('config.ini')
-if valid:
-    print "Reading plugin manifest ({0})...".format(cfgparser.manifest)
-    plugin_map = get_plugin_mapping(cfgparser)
-    if plugin_map:
-        
-        # get hashes for comparison
-        print "Checking local plugins..."
-        loc_hashes = get_local_hashes(plugin_map.keys(), \
-                                      cfgparser.pluginsfolder)
 
-        print "Checking remote plugins..."
-        rem_hashdata = get_remote_data(plugin_map)
-        print ""
+def run():
+    cfgparser = PluginConfigParser()
+    # initialize config parser
+    print "Reading config file..."
+    valid = cfgparser.read('config.ini')
+    if valid:
+        print "Reading plugin manifest ({0})...".format(cfgparser.manifest)
+        plugin_map = get_plugin_mapping(cfgparser)
+        if plugin_map:
+            
+            # get hashes for comparison
+            print "Checking local plugins..."
+            loc_hashes = get_local_hashes(plugin_map.keys(), \
+                                          cfgparser.pluginsfolder)
 
-        updatable = set_intersection(loc_hashes, rem_hashdata)
-        hasNew = []
+            print "Checking remote plugins..."
+            rem_hashdata = get_remote_data(plugin_map)
+            print ""
 
-        for p in updatable:
-            if loc_hashes[p] == rem_hashdata[p].md5Hash:
-                print p + " is up to date."
-            else:
-                hasNew.append(p)
-                print p + " has a new version."
+            updatable = set_intersection(loc_hashes, rem_hashdata)
+            hasNew = []
 
-        print ""
+            for p in updatable:
+                if loc_hashes[p] == rem_hashdata[p].md5Hash:
+                    print p + " is up to date."
+                else:
+                    hasNew.append(p)
+                    print p + " has a new version."
 
-        if len(hasNew) == 0:
-            print "No updates to be done."
-        else:
-            print "Update type: {0}\n".format(cfgparser.update)
+            print ""
 
-            newData = {plugin:data for plugin,data \
-                       in rem_hashdata.iteritems() \
-                       if plugin in hasNew}
-                
-            if cfgparser.update == 'none':
+            if len(hasNew) == 0:
                 print "No updates to be done."
             else:
-                writePath = ''
-                if cfgparser.update == 'auto':
-                    writePath = cfgparser.pluginsfolder
-                elif cfgparser.update == 'save':
-                    writePath = 'updates'
-                else:
-                    print "Unknown update type: {0}"\
-                          .format(cfgparser.update)
-                    print "Program will now exit."
-                    sys.exit(0)
+                print "Update type: {0}\n".format(cfgparser.update)
 
-                failed = write_data(newData, writePath)
-                for success in set_difference(newData, failed):
-                    print "{0} was saved.".format(success)
-                for f in failed:
-                    print "The plugin {0} could not be written.".format(f)                 .format(f)
-                
-        
-    else:
-        print "No updatable plugins."
+                newData = {plugin:data for plugin,data \
+                           in rem_hashdata.iteritems() \
+                           if plugin in hasNew}
+                    
+                if cfgparser.update == 'none':
+                    print "No updates to be done."
+                else:
+                    writePath = ''
+                    if cfgparser.update == 'auto':
+                        writePath = cfgparser.pluginsfolder
+                    elif cfgparser.update == 'save':
+                        writePath = 'updates'
+                    else:
+                        print "Unknown update type: {0}"\
+                              .format(cfgparser.update)
+                        print "Program will now exit."
+                        sys.exit(0)
+
+                    failed = write_data(newData, writePath)
+                    for success in set_difference(newData, failed):
+                        print "{0} was saved.".format(success)
+                    for f in failed:
+                        print "The plugin {0} could not be written.".format(f)                 .format(f)
+                    
+            
+        else:
+            print "No updatable plugins."
