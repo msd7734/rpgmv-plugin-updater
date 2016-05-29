@@ -5,7 +5,7 @@ from ConfigParser import NoSectionError
 # to recreate behavior from ConfigParser
 from collections import OrderedDict as _default_dict
 
-req_sections = ['manifest', 'pluginsfolder', 'root', 'batch', 'plugin',\
+req_sections = ['manifest', 'pluginsfolder', 'batch', 'plugin',\
                 'update']
 
 update_types = ['auto', 'save', 'none']
@@ -71,8 +71,12 @@ class PluginConfigParser(SafeConfigParser):
         if self.pluginsfolder.lower() == 'default':
             self.pluginsfolder = 'js/plugins'
 
-        for r in self.items('root'):
-            self.root[ r[0] ] = r[1]
+        # root is technically optional to the program functioning
+        try:
+            for r in self.items('root'):
+                self.root[ r[0] ] = r[1]
+        except NoSectionError as nse:
+            pass
 
         for b in self.items('batch'):
             self.batch[ b[0] ] = b[1]
