@@ -226,7 +226,7 @@ def run():
     cfgparser = PluginConfigParser()
     # initialize config parser
     print "Reading config file..."
-    valid = cfgparser.read('config.ini')
+    valid = cfgparser.read('updateconfig.ini')
     if valid:
         print "Reading plugin manifest ({0})...".format(cfgparser.manifest)
         plugin_map = get_plugin_mapping(cfgparser)
